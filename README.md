@@ -23,12 +23,12 @@ Our method bridges diffusion models and proximal optimization, offering a robust
 │   ├── sampling.py             # Samplers (Euler, Heun, RK4, DDIM, DiffPIR)  
 │   ├── sdes.py                 # SDE formulations (VE, VP, MY)  
 │   ├── training.py             # Trainer classes and dataset loaders  
-│   └── utils.py                # Additional utilities, metrics, and visualization tools
+│   └── utils.py                # Additional utilities, metrics, and visualization tools  
 └── toy\_experiments/            # Theoretical verifications and 1D/2D examples  
-│   ├── counter\_example\_vp.py   # VP-SDE boundary accumulation visualization  
-│   ├── equivalence.py          # Score matching vs. proximal gradient equivalence  
-│   ├── gaussian\_comparison.py  # 1D Gaussian comparisons  
-│   └── proximal\_quadra.py      # Constrained quadratic optimization
+    ├── counter\_example\_vp.py   # VP-SDE boundary accumulation visualization  
+    ├── equivalence.py          # Score matching vs. proximal gradient equivalence  
+    ├── gaussian\_comparison.py  # 1D Gaussian comparisons  
+    └── proximal\_quadra.py      # Constrained quadratic optimization
 
 * src/: Core implementation containing the Unet models, training loops, specific inverse problem formulations, specialized sampling procedures (including DiffPIR and gradient guidance), and utility metric calculators.
 * toy\_experiments/: Contains 1D/2D toy distributions and constrained optimization scripts that empirically validate the equivalence of score matching and proximal gradients.
@@ -56,9 +56,9 @@ By default, the code focuses on **FFHQ** as the primary high-resolution image da
 
 data/  
 └── FFHQ/  
-├── 00000.png  
-├── 00001.png  
-└── ...
+  ├── 00000.png  
+  ├── 00001.png  
+  └── ...
 
 *(Note: You can similarly set up CelebA\_HQ, LSUN, or ImageNet under ./data/)*
 
