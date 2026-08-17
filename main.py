@@ -170,7 +170,7 @@ def save_figure(out_dir, basename, gt_np, y_np, x_np, mask_np=None, psnr=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="configs/partial_deblur.yaml", help="path to a YAML config")
+    ap.add_argument("--config", default="configs/partial_inpaint.yaml", help="path to a YAML config")
     ap.add_argument("--imgs", default="testsets/ffhq",
                     help="image file or directory (default: testsets/ffhq)")
     ap.add_argument("--model-zoo", default="./model_zoo", help="directory containing {model_name}.pt")
