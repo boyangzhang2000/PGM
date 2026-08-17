@@ -68,7 +68,7 @@ def sample_partial(model, op, y, mu_t, sigma_t, lam_t, t_seq, K_seq, sig_n,
     """
     g = th.Generator(device=device).manual_seed(seed)
     if init == "gauss":
-        x = th.randn(op.A_T(y).shape, generator=g)
+        x = th.randn(op.A_T(y).shape, generator=g, device=device)
     else:
         x = op.A_T(y).clone() if init == "backproj" else th.zeros_like(op.A_T(y))
     total_iters = sum(K_seq)
@@ -81,7 +81,7 @@ def sample_partial(model, op, y, mu_t, sigma_t, lam_t, t_seq, K_seq, sig_n,
             for k in range(K_seq[i]):
                 gf = op.A_T(op.A(x) - y) / (grad_ref ** 2)
                 p = _prox(model, x, t, mu_t, sigma_t)
-                z = th.randn(x.shape, generator=g)
+                z = th.randn(x.shape, generator=g, device=device)
                 x = ((d / lam) * p
                      + (1.0 - d / lam - d * lam) * x
                      - d * gi * gf
@@ -120,22 +120,28 @@ def sample_joint(model, op, y, mu_t, sigma_t, lam_t, t_seq, K_seq, sig_n,
     """
     g = th.Generator(device=device).manual_seed(seed)
     if init == "gauss":
-        x = th.randn(op.A_T(y).shape, generator=g)
+        x = th.randn(op.A_T(y).shape, generator=g, device=device)
     else:
         x = op.A_T(y).clone() if init == "backproj" else th.zeros_like(op.A_T(y))
+    total_iters = sum(K_seq)
     with th.no_grad():
+        pbar = tqdm(total=total_iters, desc="Sampling progress")
         for i, t in enumerate(t_seq):
             lam = float(lam_t[t])
             d = _delta(lam, delta_mode, cap=delta_cap, delta_c=delta_c, scale=delta_scale)
             gi = gamma_seq[i] if gamma_seq is not None else gamma
-            for _ in range(K_seq[i]):
+            for k in range(K_seq[i]):
                 gf = op.A_T(op.A(x) - y) / (grad_ref ** 2)
                 x_in = x - gi * lam * gf
                 p = _prox(model, x_in, t, mu_t, sigma_t)
-                z = th.randn(x.shape, generator=g)
+                z = th.randn(x.shape, generator=g, device=device)
                 x = (d / lam) * p + (1.0 - d / lam) * x + (2.0 * d) ** 0.5 * z
                 if clamp_x is not None:
                     x = x.clamp(clamp_x[0], clamp_x[1])
+                pbar.update(1)
+                pbar.set_postfix({"t": t, "k_t": k})
+        pbar.close()
+
     if final_prox:
         ft = final_t if final_t is not None else t_seq[-1]
         x = _prox(model, x, ft, mu_t, sigma_t)
