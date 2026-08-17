@@ -1,9 +1,10 @@
-torch>=2.0.0
-torchvision>=0.15.0
-numpy>=1.21.0
-matplotlib>=3.5.0
-scipy>=1.7.0
-seaborn>=0.11.0
-tqdm>=4.62.0
+# FFHQ inverse-problem sampling with PGM (Proximal-based Generative Modeling)
+
+torch>=1.10
+torchvision
+numpy>=1.20
+scipy>=1.7
+matplotlib>=3.5
+pyyaml>=5.4
+Pillow>=8.0
 lpips>=0.1.4
-pyyaml>=6.0
