@@ -1,0 +1,26 @@
+# =============================================================================
+# Joint (paper Appendix) -- 4x bicubic super-resolution, prox network
+# =============================================================================
+# Task     : 4x bicubic SR, sigma_n=0.05
+# Model    : prox_ffhq_10m (mode) network
+# NFE      : 7 x ~14 = 100
+task: sr
+method: joint
+model_name: prox_ffhq_10m
+
+sf: 4
+sig_n: 0.05
+
+t_seq: [256, 196, 128, 64, 32, 16, 8]
+K_seq: [14, 14, 14, 14, 14, 15, 15]
+
+gamma: 1.0
+gamma_seq: [0.0007, 0.0024, 0.0081, 0.027, 0.09, 0.3, 1.0]   # annealing
+grad_ref: 0.1
+delta_mode: lambda
+delta_cap: 0.3
+delta_scale: 0.7
+final_prox: true
+final_t: 16
+init: gauss
+clamp_x: [-2.0, 2.0]

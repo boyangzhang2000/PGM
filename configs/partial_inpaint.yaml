@@ -1,0 +1,27 @@
+# =============================================================================
+# Partial (paper Algorithm 3) -- random inpainting (70% mask), prox network
+# =============================================================================
+# Task     : random inpainting, 70% pixels masked
+# Model    : prox_ffhq_10m (mode) network
+# NFE      : 7 x ~14 = 100
+task: inpaint
+method: partial
+model_name: prox_ffhq_10m
+
+keep: 0.3
+mask_seed: 7
+sig_n: 0.05
+
+t_seq: [256, 196, 128, 64, 32, 16, 8]
+K_seq: [14, 14, 14, 14, 14, 15, 15]
+
+gamma: 12.0
+gamma_seq: [0.0087, 0.029, 0.097, 0.324, 1.08, 3.6, 12.0]   # annealing
+grad_ref: 0.1
+delta_mode: lambda
+delta_cap: 0.3
+delta_scale: 0.7
+final_prox: true
+final_t: 16
+init: backproj
+clamp_x: [-2.0, 2.0]

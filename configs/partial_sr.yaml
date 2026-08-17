@@ -1,0 +1,26 @@
+# =============================================================================
+# Partial (paper Algorithm 3) -- 4x bicubic super-resolution, prox network
+# =============================================================================
+# Task     : 4x bicubic SR, sigma_n=0.05
+# Model    : prox_ffhq_10m (mode) network
+# NFE      : 6 x ~16 = 100
+task: sr
+method: partial
+model_name: prox_ffhq_10m
+
+sf: 4
+sig_n: 0.05
+
+t_seq: [16, 8, 4, 3, 2, 1]
+K_seq: [18, 16, 16, 16, 16, 18]
+
+gamma: 5.0
+gamma_seq: [0.16, 0.31, 0.62, 1.25, 2.5, 5.0]   # annealing, large-t small gamma
+grad_ref: 0.1
+delta_mode: lambda
+delta_cap: 0.3
+delta_scale: 0.1
+final_prox: true
+final_t: 4
+init: backproj
+clamp_x: [-2.0, 2.0]

@@ -1,0 +1,28 @@
+# =============================================================================
+# Joint (paper Appendix, sec:proxdiff) -- Gaussian deblurring, prox network
+# =============================================================================
+# Task     : Gaussian deblurring, kernel 61x61, sigma_blur=3.0, sigma_n=0.05
+# Model    : prox_ffhq_10m (mode) network
+# NFE      : 7 x ~14 = 100
+
+task: deblur
+method: joint
+model_name: prox_ffhq_10m
+
+kernel_size: 61
+sigma_blur: 3.0
+sig_n: 0.05
+
+t_seq: [256, 196, 128, 64, 32, 16, 8]
+K_seq: [14, 14, 14, 14, 14, 15, 15]
+
+gamma: 3.0
+gamma_seq: [0.047, 0.094, 0.19, 0.375, 0.75, 1.5, 3.0]   # annealing
+grad_ref: 0.1
+delta_mode: lambda
+delta_cap: 0.3
+delta_scale: 0.5
+final_prox: true
+final_t: 12
+init: gauss                          # standard Gaussian
+clamp_x: [-2.0, 2.0]

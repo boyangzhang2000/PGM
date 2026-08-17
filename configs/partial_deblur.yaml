@@ -1,0 +1,27 @@
+# =============================================================================
+# Partial (paper Algorithm 3) -- Gaussian deblurring, prox network
+# =============================================================================
+# Task     : Gaussian deblurring, kernel 61x61, sigma_blur=3.0, sigma_n=0.05
+# Model    : prox_ffhq_10m (proximal-matching / mode) network
+# NFE      : 4 x 25 = 100
+task: deblur
+method: partial
+model_name: prox_ffhq_10m
+
+kernel_size: 61
+sigma_blur: 3.0
+sig_n: 0.05
+
+t_seq: [25, 16, 12, 8]
+K_seq: [25, 25, 25, 25]
+
+gamma: 45.0
+gamma_seq: [45.0, 45.0, 45.0, 45.0]   # constant (deblur: no annealing benefit)
+grad_ref: 0.1
+delta_mode: lambda
+delta_cap: 0.3
+delta_scale: 0.05
+final_prox: true
+final_t: 16
+init: backproj
+clamp_x: [-2.0, 2.0]
