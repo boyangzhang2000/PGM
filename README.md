@@ -1,158 +1,201 @@
 # PGM — Proximal-based Generative Modeling
 
-This is a clean, self-contained PyTorch implementation of the paper *"Proximal-based Generative Modeling: Algorithm, Theory, and Applications"* (Boyang Zhang, Zhiguo Wang, Ya-Feng Liu).
+PGM solves image inverse problems with learned proximal maps and annealed
+proximal Langevin sampling. It provides **Joint** and **Partial** methods with
+**EM**, **exponential interpolation**, and **linearly implicit IMEX**
+discretizations, together with proximal training for FFHQ and ImageNet.
 
-https://arxiv.org/pdf/2605.13278
+Sampling, measurement operators, and optional image refinement share a
+YAML-driven interface. The runtime uses an available CUDA device and otherwise
+falls back to the CPU.
 
----
+## Supported Tasks
 
-## Directory layout
+| Task | Measurement model | Partial configuration | Joint configuration |
+| --- | --- | --- | --- |
+| `deblur` | Gaussian blur | [Partial](configs/partial/deblur.yaml) | [Joint](configs/joint/deblur.yaml) |
+| `inpaint` | Randomly missing pixels | [Partial](configs/partial/inpaint.yaml) | [Joint](configs/joint/inpaint.yaml) |
+| `sr` | Antialiased downsampling | [Partial](configs/partial/sr.yaml) | [Joint](configs/joint/sr.yaml) |
+| `ndb` | KernelWizard nonlinear blur | [Partial](configs/partial/ndb.yaml) | [Joint](configs/joint/ndb.yaml) |
+| `pr` | Fourier-amplitude measurements | [Partial](configs/partial/pr.yaml) | [Joint](configs/joint/pr.yaml) |
 
-```
-PGM/
-├── README.md                       <- this file
-├── requirements.txt                <- Python dependencies
-├── main.py                         <- entry point
-├── pgm/                            <- core library
-│   ├── config.py                   <- YAML loader
-│   ├── data.py                     <- load_images / list_images_in_dir
-│   ├── model.py                    <- build_model + Tweedie x0
-│   ├── schedule.py                 <- build_schedule, lambda_to_t, k_us_seq / make_k_seq
-│   ├── operators.py                <- GaussianDeblur / BicubicSR / RandomInpaint (forward + adjoint)
-│   ├── samplers.py                 <- sample_partial (APL), sample_joint (Prox_{f+g} Langevin)
-│   └── metrics.py                  <- PSNR / SSIM / LPIPS
+## Repository Layout
+
+```text
+.
+├── main.py                 Reconstruction entry point
+├── requirements.txt        Python dependencies
 ├── configs/
-│   ├── partial_deblur.yaml
-│   ├── partial_sr.yaml
-│   ├── partial_inpaint.yaml
-│   ├── joint_deblur.yaml
-│   ├── joint_sr.yaml
-│   └── joint_inpaint.yaml
-├── model_zoo/                      <- put the two .pt files here (see model_zoo/README.md)
-│   └── README.md
-├── testsets/ffhq/
-│   ├── 60000.png
-│   └── 60002.png
-├── guided_diffusion/               <- required for model construction
-└── utils/
-    └── utils_model.py              <- minimal argparser (only the part used by PGM)
+│   ├── defaults.yaml       Shared sampling settings
+│   ├── joint/              Joint task presets
+│   ├── partial/            Partial task presets
+│   ├── models/             FFHQ and ImageNet architectures
+│   ├── operators/          Nonlinear operator settings
+│   └── train/              Training presets
+├── pgm/                    Samplers, operators, solvers, and evaluation
+│   └── backends/           Nonlinear measurement networks
+├── train/                  Moreau score matching and checkpoint management
+├── guided_diffusion/       Diffusion network components
+├── model_zoo/              Pretrained weights
+└── testsets/               Reconstruction inputs
 ```
 
----
+## Installation
 
-## 1. Install
+Run the following commands from the repository root in your Python environment:
 
 ```bash
-# (recommended) create a fresh conda env
-conda create -n pgm python=3.10
-conda activate pgm
-
-# clone this repo, then:
-cd PGM
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-`lpips` will download the VGG weights (~140 MB) on first use.
+GPU execution requires a CUDA-compatible PyTorch installation. LPIPS may
+download its perceptual weights on first use; prepare its cache before running
+offline.
 
-## 2. Prepare the model weights
+## Prepare Weights and Images
 
-The two FFHQ-10M checkpoints go into `model_zoo/`:
+Download the FFHQ proximal checkpoint and place it in `model_zoo/`.
+The [model zoo guide](model_zoo/README.md) lists the checkpoint files, available
+downloads, architecture choices, and additional assets required for training
+and nonlinear deblurring.
+
+The default reconstruction inputs are in `testsets/ffhq/`. Use `--imgs` to
+select another image directory or a single image. The reconstruction pipeline
+creates measurements from the input images and uses the clean inputs as
+evaluation references.
+
+## Image Reconstruction
+
+Select a task and method to load their preset:
 
 ```bash
-# download from the shared Google Drive folder (see model_zoo/README.md)
-# place the files at:
-PGM/model_zoo/prox_ffhq_10m.pt
-PGM/model_zoo/diffusion_ffhq_10m.pt
+python main.py --task inpaint --method partial
+python main.py --task deblur --method partial
+python main.py --task sr --method partial
+python main.py --task ndb --method joint
+python main.py --task pr --method joint
 ```
 
-If your checkpoints live elsewhere, pass `--model-zoo /path/to/zoo` to
-`main.py`.
-
-## 3. Run
-
-The default image directory is `testsets/ffhq/` (two pre-shipped FFHQ
-images, `60000.png` and `60002.png`). Override with `--imgs /path/to/dir`
-or `--imgs /path/to/single.png`.
+Select a discretization, an explicit configuration, or custom input and output
+paths as needed:
 
 ```bash
-# --- Partial Approximation (prox network, single-point Dirac init) ---
-python main.py --config configs/partial_deblur.yaml
-python main.py --config configs/partial_sr.yaml
-python main.py --config configs/partial_inpaint.yaml
-
-# --- Joint Approximation (prox network, standard-Gaussian init) ---
-python main.py --config configs/joint_deblur.yaml
-python main.py --config configs/joint_sr.yaml
-python main.py --config configs/joint_inpaint.yaml
-
+python main.py --task deblur --method partial --scheme exp
+python main.py --task deblur --method joint --scheme imp
+python main.py --config configs/partial/pr.yaml --device cpu
+python main.py --task sr --method partial --imgs /path/to/images --out results/restoration
 ```
 
-Each run saves:
+`python -m pgm` provides the same interface. Use either `--config` or the
+`--task` and `--method` pair. Choose an empty output directory for each run.
 
+| Option | Purpose |
+| --- | --- |
+| `--scheme` | Select `em`, `exp`, or `imp` and apply its preset overrides |
+| `--device` | Select automatic device detection, CPU, or CUDA |
+| `--checkpoint` | Load weights from a custom path |
+| `--architecture` | Select the network definition for a legacy state dictionary |
+| `--image-offset` | Preserve image indices, seeds, and masks when replaying a subset |
+| `--dry-run` | Validate and print the resolved configuration without loading weights |
+| `--smoke` | Run a reduced execution check |
+| `--lpips` | Control perceptual metric evaluation |
+
+`--lpips off` disables the perceptual metric. A configuration that enables
+LPIPS regularization still requires the perceptual model.
+
+### Configuration
+
+[Shared defaults](configs/defaults.yaml) are overridden by the selected task
+preset and its discretization settings. YAML files remain the source of
+parameter values; see the [configuration reference](configs/README.md).
+
+| Configuration group | Controls |
+| --- | --- |
+| `model` | Checkpoint, architecture, and inference precision |
+| `operator` | Measurement geometry, noise, kernels, and external assets |
+| `sampler` | Initial state, annealing times, inner-step allocation, step sizes, guidance, and readout |
+| `consistency` | Observation constraints and optional in-chain corrections |
+| `refinement` | Post-sampling optimizer and data, LPIPS, and TV terms |
+| Seed fields | Independent sampling and observation streams and their per-image offsets |
+
+The sampling budget includes an enabled final proximal readout. Post-sampling
+Adam or L-BFGS refinement optimizes the image without calling or differentiating
+through the proximal network. Its iterations and operator evaluations are
+recorded separately from sampling network evaluations.
+
+### Outputs
+
+Each run records the effective configuration, input and weight digests, device,
+seeds, metrics, and evaluation counts. Reconstruction outputs are organized as:
+
+```text
+results/<run>/
+├── config.yaml
+├── config.json
+├── metrics.json
+├── metrics.csv
+├── source_<digest>.zip
+└── <image-stem>/
+    ├── reconstruction.png
+    ├── comparison.png
+    ├── reconstruction.npy
+    ├── sampling_estimate.npy
+    ├── raw_estimate.npy
+    ├── observation.npy
+    ├── state.npy
+    └── metrics.json
 ```
-results/<config-name>/
-├── config.json               <- the resolved config
-├── metrics.json              <- per-image + mean PSNR-Y / SSIM / LPIPS
-├── 60000_x.npy               <- reconstruction in [-1, 1] (3x256x256)
-├── 60000_y.npy               <- observation in [-1, 1]
-├── 60000_mask.npy            <- only for inpaint
-├── 60000.png                 <- side-by-side figure (GT | y | [mask] | recon)
-├── 60002_x.npy
-├── 60002_y.npy
-├── 60002.png
-└── ...
+
+Inpainting also saves the observation mask. The sampling estimate is retained
+before independent refinement; the raw estimate precedes final observation
+constraints. Metrics include PSNR, luminance PSNR, SSIM, and LPIPS when enabled.
+
+## Training
+
+The `train` package fine-tunes unconditional diffusion backbones using
+Gaussian-kernel Moreau score matching. Training and sampling use the same
+explicit time conditioning and clean-image prediction.
+
+Prepare an FFHQ image directory or an ImageNet training directory with class
+subdirectories, then select the corresponding preset:
+
+```bash
+python -m train --config configs/train/ffhq.yaml --data /path/to/ffhq
+python -m train --config configs/train/imagenet.yaml --data /path/to/imagenet/train
 ```
 
-The Python routine prints one line per image, e.g.:
+Images are discovered recursively. Class directory names organize the dataset;
+they are not network conditioning labels. Architecture, initial weights, kernel
+annealing, optimizer, augmentation, and output settings are defined in
+`configs/train/`.
 
+Use command-line paths to select initial weights, validation data, or resume a
+saved run:
+
+```bash
+python -m train --config configs/train/ffhq.yaml --checkpoint /path/to/pretrained.pt --data /path/to/ffhq
+python -m train --config configs/train/imagenet.yaml --data /path/to/imagenet/train --validation /path/to/imagenet/val
+python -m train --config /path/to/training.yaml --resume /path/to/run/latest.pt
 ```
-[60000] psnr=28.74  psnr_y=29.18  ssim=0.9013  lpips=0.2741  (t=[25,16,12,8], K=[25,...], 13.0s)
+
+| Training output | Purpose |
+| --- | --- |
+| `proximal.pt` | Current network weights with an embedded architecture for sampling |
+| `latest.pt` | Model, optimizer, random state, and data cursor for resumption |
+| `best.pt` | Best model under fixed-corruption validation, when validation is enabled |
+| `config.yaml`, `run.json`, `history.jsonl`, `status.json` | Configuration, provenance, training statistics, and progress |
+
+Load an exported proximal model directly for reconstruction:
+
+```bash
+python main.py --task deblur --method partial --checkpoint /path/to/run/proximal.pt
 ```
 
-Reference numbers (single image `60000.png`, the shipped configs, 42 fixed
-seed, **NFE = 100 for every sampler**).  Three design insights validated by tuning:
+Relative resource paths in YAML are resolved from the repository root.
+Command-line file paths are resolved from the current working directory.
 
-1. **The prox network is most accurate at small t**, so the partial deblur/SR
-   schedules concentrate on t ≲ 25 with a small Langevin step;
-2. **γ annealing** — `gamma_seq[i] = γ · r^(T-1-i)` (large t small γ, small t
-   large γ) — is decisive whenever the schedule spans a wide t range: the chain
-   *generates* content at large t (tiny γ so the data gradient does not fight the
-   prior) and *refines* at small t (large γ);
-3. **final-prox timestep decoupling** — the last state carries Langevin noise
-   matching t ≈ 8--16, so the final `Prox_g` projection is taken at
-   `final_t ∈ {8,12,16}` (projecting at the smallest t does almost nothing).
-
-
-## 4. Tune the sampling parameters
-
-All hyper-parameters live in the YAML configs. The most useful knobs:
-
-| Key | Effect |
-|---|---|
-| `model_name`        | `prox_ffhq_10m` (mode, flagship) or `diffusion_ffhq_10m` (mean; use the SAME config to see the network difference) |
-| `t_seq`, `K_seq`    | Explicit diffusion-timestep schedule and per-stage inner iterations (`K_seq` sums to the NFE budget) |
-| `lam_max`, `lam_min`, `T` | Alternative: geometric lambda schedule (`t_seq` overrides it) |
-| `gamma`, `gamma_seq` | Likelihood weight. `gamma_seq` = per-stage list for **annealing** `γ_i = γ·r^(T-1-i)` (large t small γ, small t large γ) — decisive for wide-t schedules |
-| `grad_ref`          | Reference scale of the gradient `grad_f = A^T(Ax - y) / grad_ref^2`; the paper uses σ_n, we default to 0.1 to avoid the 1/σ_n² = 400 blow-up |
-| `delta_scale`       | **Key knob for the prox network**: d = δ_scale·λ.  A small value (0.05--0.3) keeps the Langevin noise from washing out the mode (δ_scale=1 washes the mode out) |
-| `final_prox`, `final_t` | `true` → output `Prox_g(x)` of the last state; `final_t` decouples the projection timestep (8--16 matches the final state's noise, +1--3 dB) |
-| `init`              | partial: `backproj` (single-point Dirac); joint: `gauss` (standard Gaussian) |
-| `clamp_x`           | safety clamp on the chain state (prevents NaN blow-ups) |
-
-## 5. Code structure in one paragraph
-
-`build_model` (model.py) loads the FFHQ-10M U-Net and the diffusion schedule
-via `guided_diffusion.create_model_and_diffusion`. The forward operator
-(operators.py) is a numpy FFT circular convolution for deblur (CPU
-double-precision, robust to the GPU cuFFT race we hit on some machines) and
-plain torchvision ops for SR / inpaint; it exposes only `A` and `A^T`. The two
-samplers (samplers.py) implement the paper's **Annealed Proximal Langevin**
-iteration in image space:
-
-## 6. Citation
-
+## Citation
 If you use this code, please cite the paper:
-
 ```bibtex
 @article{zhang2026proximal,
   title={Proximal-Based Generative Modeling for Bayesian Inverse Problems},
@@ -162,4 +205,4 @@ If you use this code, please cite the paper:
 }
 ```
 
-
+https://arxiv.org/pdf/2605.13278
