@@ -1,0 +1,43 @@
+task: pr
+method: partial
+sampler:
+  likelihood_mode: step
+  temperature_mode: matched
+  temperature_power: 0.47
+  delta_mode: ad
+  delta_scale: 0.9
+  init: zero
+  final_t: 24
+  schedule:
+    stages: 99
+    start: 512
+    warmup_end: 256
+    warmup_fraction: 0.1
+  likelihood: 1
+  scheme: em
+operator:
+  oversample: 2.0
+  fft_device: auto
+consistency:
+  amplitude: true
+  phase_coupling: 0.003
+refinement:
+  steps: 60
+  data: 3.0
+  tv: 0.03
+seed: 0
+schemes:
+  exp:
+    temperature_power: 0.0
+    consistency:
+      phase_coupling: 0.01
+    refinement:
+      steps: 100
+      data: 1.0
+  imp:
+    temperature_power: 0.0
+    consistency:
+      phase_coupling: 0.01
+    refinement:
+      steps: 100
+      data: 1.0

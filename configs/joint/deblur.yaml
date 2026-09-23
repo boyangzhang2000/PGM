@@ -1,0 +1,24 @@
+task: deblur
+method: joint
+sampler:
+  init: gauss
+  likelihood:
+    start: 0.14
+    end: 9.0
+  scheme: em
+operator:
+  kernel_size: 61
+  blur_sigma: 3.0
+schemes:
+  imp:
+    delta_scale: 0.275
+    refinement:
+      steps: 100
+  exp:
+    refinement:
+      steps: 100
+refinement:
+  steps: 60
+  lr: 0.001
+  lpips: 0.0
+  tv: 0.005

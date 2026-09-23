@@ -1,0 +1,35 @@
+task: ndb
+method: joint
+sampler:
+  delta_scale: 0.5
+  final_t: 8
+  schedule:
+    stages: 10
+    start: 128
+    end: 2
+  likelihood:
+    start: 0.1
+    end: 2
+  scheme: em
+operator:
+  options: configs/operators/ndb.yaml
+  kernel_seed: 0
+  kernel_scale: 1.2
+refinement:
+  steps: 10
+  lr: 0.003
+  lpips: 0.001
+  tv: 0.003
+seed: 5
+schemes:
+  exp:
+    refinement:
+      lr: 0.005
+      lpips: 0.01
+      tv: 0.001
+  imp:
+    refinement:
+      steps: 100
+      lr: 0.005
+      lpips: 0.01
+      tv: 0.001

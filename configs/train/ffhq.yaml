@@ -1,0 +1,7 @@
+model:
+  architecture: configs/models/prox_ffhq.yaml
+  checkpoint: model_zoo/diffusion_ffhq_10m.pt
+data:
+  train_dir: datasets/ffhq/train
+output:
+  directory: results/train/ffhq

@@ -1,0 +1,24 @@
+task: inpaint
+method: partial
+sampler:
+  delta_scale: 0.75
+  final_t: 20
+  likelihood:
+    start: 0.0087
+    end: 12.0
+  scheme: em
+operator:
+  missing_fraction: 0.7
+  mask_seed: 7
+  mask_seed_step: 100
+  noise_std: 0.0
+refinement:
+  steps: 60
+  lpips: 0.0005
+schemes:
+  exp:
+    refinement:
+      steps: 100
+  imp:
+    refinement:
+      steps: 100

@@ -1,0 +1,7 @@
+model:
+  architecture: configs/models/prox_imagenet.yaml
+  checkpoint: model_zoo/imagenet256.pt
+data:
+  train_dir: datasets/imagenet/train
+output:
+  directory: results/train/imagenet

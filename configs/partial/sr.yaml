@@ -1,0 +1,24 @@
+task: sr
+method: partial
+sampler:
+  delta_scale: 1.7
+  final_t: 20
+  likelihood:
+    start: 0.01456
+    end: 20.8
+  scheme: em
+operator:
+  scale_factor: 4
+schemes:
+  exp:
+    delta_scale: 0.85
+    refinement:
+      steps: 100
+  imp:
+    delta_scale: 0.85
+    refinement:
+      steps: 100
+refinement:
+  steps: 10
+  lr: 0.001
+  tv: 0.02

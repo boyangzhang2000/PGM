@@ -1,0 +1,42 @@
+task: pr
+method: joint
+sampler:
+  likelihood_mode: step
+  temperature_mode: matched
+  delta_mode: ad
+  delta_scale: 0.9
+  init: zero
+  final_t: 24
+  schedule:
+    stages: 99
+    start: 512
+    warmup_end: 256
+    warmup_fraction: 0.1
+  likelihood: 1
+  scheme: em
+operator:
+  oversample: 2.0
+  fft_device: auto
+consistency:
+  amplitude: true
+  phase_coupling: 0.01
+refinement:
+  steps: 60
+  lr: 0.01
+  data: 3
+  lpips: 0.005
+  tv: 0.01
+seed: 1
+schemes:
+  exp:
+    refinement:
+      lr: 0.005
+      data: 1.0
+      lpips: 0.01
+      tv: 0.001
+  imp:
+    refinement:
+      lr: 0.005
+      data: 1.0
+      lpips: 0.01
+      tv: 0.001

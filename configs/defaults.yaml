@@ -1,0 +1,34 @@
+model:
+  checkpoint: model_zoo/prox_ffhq_10m.pt
+  precision: fp32
+seed: 42
+observation_seed: 1234
+observation_seed_step: 1000
+seed_step: 1000
+sampler:
+  scheme: em
+  schedule:
+    budget: 100
+    stages: 7
+    start: 256
+    end: 8
+    spacing: geometric
+    allocation: uniform
+  likelihood:
+    start: 0.01
+    end: 1
+  grad_scale: 0.1
+  delta_mode: lambda
+  delta_scale: 0.55
+  delta_cap: 0.3
+  init: backproj
+  final_prox: true
+  final_t: 12
+operator:
+  noise_std: 0.05
+refinement:
+  steps: 0
+  lr: 0.005
+  data: 1.0
+  lpips: 0.01
+  tv: 0.001

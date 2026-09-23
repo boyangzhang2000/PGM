@@ -1,0 +1,25 @@
+task: sr
+method: joint
+sampler:
+  delta_scale: 1.5
+  init: gauss
+  final_t: 20
+  likelihood:
+    start: 0.0112
+    end: 16.0
+  scheme: em
+operator:
+  scale_factor: 4
+schemes:
+  imp:
+    delta_scale: 0.75
+    refinement:
+      steps: 100
+  exp:
+    refinement:
+      steps: 100
+refinement:
+  steps: 60
+  lr: 0.001
+  lpips: 0.02
+  tv: 0.01

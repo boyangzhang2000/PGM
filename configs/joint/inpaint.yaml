@@ -1,0 +1,26 @@
+task: inpaint
+method: joint
+sampler:
+  delta_scale: 1.6
+  init: gauss
+  final_t: 20
+  likelihood:
+    start: 0.047
+    end: 3.0
+  scheme: em
+operator:
+  missing_fraction: 0.7
+  mask_seed: 7
+  mask_seed_step: 100
+  noise_std: 0.0
+schemes:
+  imp:
+    delta_scale: 0.8
+    refinement:
+      steps: 100
+  exp:
+    refinement:
+      steps: 100
+refinement:
+  steps: 60
+  lpips: 0.0005

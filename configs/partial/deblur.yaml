@@ -1,0 +1,19 @@
+task: deblur
+method: partial
+sampler:
+  final_t: 13
+  likelihood:
+    start: 0.14
+    end: 12.0
+  scheme: em
+operator:
+  kernel_size: 61
+  blur_sigma: 3.0
+schemes:
+  exp:
+    delta_scale: 0.275
+  imp:
+    delta_scale: 0.275
+refinement:
+  steps: 100
+  lpips: 0.005
