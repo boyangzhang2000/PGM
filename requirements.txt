@@ -1,10 +1,9 @@
-# FFHQ inverse-problem sampling with PGM (Proximal-based Generative Modeling)
-
-torch>=1.10
-torchvision
-numpy>=1.20
-scipy>=1.7
-matplotlib>=3.5
-pyyaml>=5.4
-Pillow>=8.0
+# Install a CUDA-enabled PyTorch build for GPU use; CPU also supported.
+torch>=2.0
+numpy>=1.23
+scipy>=1.9
+PyYAML>=6.0
+Pillow>=9.1
+# Optional perceptual metric (auto mode runs without it when unavailable):
+torchvision>=0.15
 lpips>=0.1.4
